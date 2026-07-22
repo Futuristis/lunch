@@ -201,3 +201,48 @@ class Order(models.Model):
                 super().save(update_fields=['order_id'])
         else:
             super().save(*args,**kwargs)
+            
+class OrderItem(models.Model):
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.PROTECT,
+        related_name='items',
+        verbose_name='Order',
+    )
+    menu_dish = models.ForeignKey(
+        MenuDish,
+        on_delete=models.PROTECT,
+        related_name='order_items',
+        verbose_name='Menu Dish',
+    )
+    quantity = models.PositiveBigIntegerField(
+        verbose_name='Quantity',
+    )
+    price = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Price",
+    )
+    net_amount = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name='Net Amount'
+        
+    )
+    
+    class Meta:
+        verbose_name = 'Order Item'
+        verbose_name_plural = 'Order items'
+        
+    def __str__(self):
+        return f'{self.quantity} x {self.menu_dish} (Order #{self.order.order_id})'
+    
+    def save(self, *args, **kwargs):
+        if self.price is None:
+            self.price = self.menu_dish.price
+        self.net_amount = self.quantity * self.price
+        super().save(*args,**kwargs)
